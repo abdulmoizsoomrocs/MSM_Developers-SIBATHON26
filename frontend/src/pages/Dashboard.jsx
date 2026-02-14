@@ -91,7 +91,7 @@ useEffect(() => {
         {/* Welcome */}
         <div>
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight">
-            Welcome back, Abdul Moiz 👋
+            Welcome back,Abdul Moiz 👋
           </h2>
           <p className="text-white/60 mt-2 text-sm md:text-base">
             Here's what's happening with your money today.
