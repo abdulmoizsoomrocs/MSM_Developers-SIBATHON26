@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
@@ -17,20 +15,21 @@ export default function Register() {
     confirmPassword: "",
   });
 
+  const [errors, setErrors] = useState({});
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    // clear field error while typing
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    // Password match validation
-    if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+    const validation = validateForm(formData);
+    if (!validation.valid) {
+      setErrors(validation.errors);
       setLoading(false);
       return;
     }
@@ -55,6 +54,33 @@ export default function Register() {
     setLoading(false);
     navigate("/");
   };
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function validatePhone(phone) {
+    // allow +, spaces, dashes and digits; require 7-15 digits
+    const digits = phone.replace(/[^0-9]/g, "");
+    return digits.length >= 7 && digits.length <= 15;
+  }
+
+  function validatePassword(pw) {
+    // min 8 chars, at least one upper, lower, number
+    return /(?=.{8,})/.test(pw) && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /[0-9]/.test(pw);
+  }
+
+  function validateForm(data) {
+    const e = {};
+    if (!data.fullName || data.fullName.trim().length < 2) e.fullName = "Enter your full name";
+    if (!data.email || !validateEmail(data.email)) e.email = "Enter a valid email address";
+    if (!data.phone || !validatePhone(data.phone)) e.phone = "Enter a valid phone number";
+    if (!data.password || !validatePassword(data.password))
+      e.password = "Password must be at least 8 characters and include upper, lower and number";
+    if (data.password !== data.confirmPassword) e.confirmPassword = "Passwords do not match";
+
+    return { valid: Object.keys(e).length === 0, errors: e };
+  }
 
   return (
     <div className="relative min-h-screen flex bg-[#071a13] overflow-hidden text-white font-sans">
@@ -111,6 +137,8 @@ export default function Register() {
               type="text"
               placeholder="John Doe"
               handleChange={handleChange}
+              value={formData.fullName}
+              error={errors.fullName}
             />
 
             <Input
@@ -119,6 +147,8 @@ export default function Register() {
               type="email"
               placeholder="name@example.com"
               handleChange={handleChange}
+              value={formData.email}
+              error={errors.email}
             />
 
             <Input
@@ -127,6 +157,8 @@ export default function Register() {
               type="tel"
               placeholder="+1 (555) 000-0000"
               handleChange={handleChange}
+              value={formData.phone}
+              error={errors.phone}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,6 +168,8 @@ export default function Register() {
                 type="password"
                 placeholder="••••••••"
                 handleChange={handleChange}
+                value={formData.password}
+                error={errors.password}
               />
 
               <Input
@@ -144,6 +178,8 @@ export default function Register() {
                 type="password"
                 placeholder="••••••••"
                 handleChange={handleChange}
+                value={formData.confirmPassword}
+                error={errors.confirmPassword}
               />
             </div>
 
@@ -188,20 +224,21 @@ export default function Register() {
   );
 }
 
-function Input({ label, name, type, placeholder, handleChange }) {
+function Input({ label, name, type, placeholder, handleChange, value, error }) {
   return (
     <div className="flex flex-col gap-2 group">
-      <label className="text-sm font-semibold text-white/80">
-        {label}
-      </label>
+      <label className="text-sm font-semibold text-white/80">{label}</label>
       <input
         name={name}
         type={type}
         placeholder={placeholder}
         onChange={handleChange}
-        required
-        className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-green-400 focus:ring-2 focus:ring-green-400/30 outline-none transition-all duration-300 group-hover:border-white/40"
+        value={value}
+        className={`w-full px-4 py-3 rounded-xl bg-white/10 border focus:border-green-400 focus:ring-2 focus:ring-green-400/30 outline-none transition-all duration-300 group-hover:border-white/40 ${
+          error ? "border-red-400" : "border-white/20"
+        }`}
       />
+      {error ? <p className="text-red-300 text-xs mt-1">{error}</p> : null}
     </div>
   );
 }
